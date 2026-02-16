@@ -3,9 +3,9 @@ SQLModel database models for Meridiano application.
 """
 
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 
-from sqlmodel import Field, Session, SQLModel, create_engine, text
+from sqlmodel import Field, Session, SQLModel, create_engine, text, Relationship
 
 from . import config_base as config
 
@@ -76,6 +76,22 @@ class Brief(SQLModel, table=True):
     brief_markdown: str
     contributing_article_ids: Optional[str] = None  # JSON string
     feed_profile: str = Field(default="default", index=True)
+
+
+# Collections models (many-to-many association) --------------------------------
+class CollectionArticle(SQLModel, table=True):
+    """Association table between collections and articles."""
+    collection_id: Optional[int] = Field(default=None, foreign_key="collections.id", primary_key=True)
+    article_id: Optional[int] = Field(default=None, foreign_key="articles.id", primary_key=True)
+
+
+class Collection(SQLModel, table=True):
+    """Collection of articles created by a user."""
+    __tablename__ = "collections"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    name: str = Field(index=True)
+    created_at: datetime = Field(default_factory=datetime.now)
 
 
 # Database engine and session management

@@ -6,7 +6,7 @@ import os
 from datetime import date, datetime, timedelta
 
 import markdown
-from flask import Flask, abort, flash, redirect, render_template, request, url_for
+from flask import Flask, abort, flash, redirect, render_template, request, url_for, jsonify
 from markupsafe import Markup
 from sqlmodel import select
 
@@ -219,10 +219,24 @@ def view_article(article_id):
         except (json.JSONDecodeError, TypeError):
             embedding_status = "Present (Invalid Format)"
 
+    # Prepare collection membership info for UI (which collections include this article)
+    collections = database.get_collections()
+    try:
+        art_id = article_data.get("id")
+        for c in collections:
+            # Determine whether this article is in the collection
+            coll_articles = database.get_articles_for_collection(c["id"])
+            c["contains"] = any(a["id"] == art_id for a in coll_articles)
+    except Exception:
+        # On error, mark collections as not containing the article
+        for c in collections:
+            c["contains"] = False
+
     return render_template(
         "view_article.html",  # Use a new template
         article=article_data,
         embedding_status=embedding_status,
+        collections=collections,
     )
 
 
@@ -317,6 +331,65 @@ def add_manual_article():
     return render_template(
         "add_article.html", available_profiles=available_profiles, default_manual_profile=manual_profile_name
     )
+
+
+# -------------------------
+# Collections routes
+# -------------------------
+@app.route("/collections", methods=["GET", "POST"])
+def collections():
+    """List collections and create a new collection."""
+    if request.method == "POST":
+        name = request.form.get("collection_name", "").strip()
+        if not name:
+            flash("Collection name is required.", "error")
+            return redirect(url_for("collections"))
+        coll_id = database.create_collection(name)
+        flash(f'Collection "{name}" created (ID: {coll_id}).', "success")
+        return redirect(url_for("view_collection", collection_id=coll_id))
+
+    cols = database.get_collections()
+    return render_template("collections.html", collections=cols)
+
+
+@app.route("/collection/<int:collection_id>")
+def view_collection(collection_id):
+    """View a single collection and its articles."""
+    coll = database.get_collection_by_id(collection_id)
+    if coll is None:
+        abort(404)
+    articles = database.get_articles_for_collection(collection_id)
+    return render_template("collection_detail.html", collection=coll, articles=articles)
+
+
+@app.route("/collection/<int:collection_id>/add_article", methods=["POST"])
+def add_article_to_collection_route(collection_id):
+    """AJAX endpoint to add an article to a collection."""
+    data = request.get_json(silent=True) or request.form
+    article_id = data.get("article_id")
+    if article_id is None:
+        return jsonify({"status": "error", "message": "article_id is required"}), 400
+    try:
+        article_id = int(article_id)
+        database.add_article_to_collection(collection_id, article_id)
+        return jsonify({"status": "ok", "collection_id": collection_id, "article_id": article_id})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@app.route("/collection/<int:collection_id>/remove_article", methods=["POST"])
+def remove_article_from_collection_route(collection_id):
+    """AJAX endpoint to remove an article from a collection."""
+    data = request.get_json(silent=True) or request.form
+    article_id = data.get("article_id")
+    if article_id is None:
+        return jsonify({"status": "error", "message": "article_id is required"}), 400
+    try:
+        article_id = int(article_id)
+        database.remove_article_from_collection(collection_id, article_id)
+        return jsonify({"status": "ok", "collection_id": collection_id, "article_id": article_id})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 
 if __name__ == "__main__":

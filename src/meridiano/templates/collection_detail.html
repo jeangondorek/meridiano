@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+{% set title = "Collection: %s" % collection.get('name', 'Collection') %}
+{% include 'head.html' %}
+<body>
+    <div class="container">
+        {% include 'header.html' %}
+
+        <h2>Collection: {{ collection['name'] }}</h2>
+        <div class="timestamp">Created: {{ collection['created_at'] | datetimeformat }}</div>
+
+        <hr>
+
+        <h3>Articles in this collection</h3>
+        {% if articles %}
+            <ul class="article-list">
+                {% for a in articles %}
+                    <li class="article-item">
+                        <div class="article-image-container">
+                            {% if a.image_url %}
+                                <img src="{{ a.image_url }}" alt="thumb" class="article-image" onerror="this.style.display='none'">
+                            {% else %}
+                                <div class="article-image-placeholder article-detail-placeholder">
+                                    <i class="fas fa-image"></i> No Image
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="article-text-content">
+                            <a class="article-link" href="{{ url_for('view_article', article_id=a['id']) }}">{{ a['title'] or a['url'] }}</a>
+                            <div class="article-meta">
+                                {{ a.published_date | datetimeformat | default('N/A') }} • {{ a.feed_profile }}
+                            </div>
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No articles in this collection yet.</p>
+        {% endif %}
+
+    </div>
+</body>
+</html>
