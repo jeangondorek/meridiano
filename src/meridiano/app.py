@@ -362,6 +362,29 @@ def view_collection(collection_id):
     return render_template("collection_detail.html", collection=coll, articles=articles)
 
 
+@app.route("/article/<int:article_id>/collections_status")
+def get_article_collections_status(article_id):
+    """AJAX endpoint to get collections and membership status for an article."""
+    try:
+        article = database.get_article_by_id(article_id)
+        if not article:
+            return jsonify({"status": "error", "message": "Article not found"}), 404
+
+        collections = database.get_collections()
+        collections_with_status = []
+        for c in collections:
+            coll_articles = database.get_articles_for_collection(c["id"])
+            article_ids_in_collection = {a["id"] for a in coll_articles}
+            collections_with_status.append(
+                {"id": c["id"], "name": c["name"], "contains": article_id in article_ids_in_collection}
+            )
+
+        return jsonify({"status": "ok", "collections": collections_with_status})
+    except Exception as e:
+        print(f"ERROR getting collection status for article {article_id}: {e}")
+        return jsonify({"status": "error", "message": "An internal error occurred."}), 500
+
+
 @app.route("/collection/<int:collection_id>/add_article", methods=["POST"])
 def add_article_to_collection_route(collection_id):
     """AJAX endpoint to add an article to a collection."""
