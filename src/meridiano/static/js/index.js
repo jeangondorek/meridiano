@@ -80,11 +80,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Global click handler for closing menus and handling collection actions
     document.addEventListener('click', async function(event) {
-        const target = event.target;
+        let target = event.target;
         let action = null;
+        let addClass = '.btn-add-to-collection';
+        let removeClass = '.btn-remove-from-collection';
 
-        if (target.matches('.btn-add-to-collection')) action = 'add';
-        if (target.matches('.btn-remove-from-collection')) action = 'remove';
+        if (target.parentElement.matches(addClass) || target.parentElement.matches(removeClass)) {
+          target = target.parentElement;
+        }
+
+        if (target.matches(addClass)) action = 'add';
+        if (target.matches(removeClass)) action = 'remove';
 
         if (action) {
             event.preventDefault();
