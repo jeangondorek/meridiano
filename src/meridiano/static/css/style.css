@@ -844,3 +844,56 @@ blockquote {
     background-color: #198754; /* Solid green on hover */
     border-color: #198754;
 }
+
+/* --- Collections Dropdown Menu --- */
+.collections-menu {
+    border-radius: 6px;
+}
+
+.collections-menu-content {
+    font-size: 0.9em; /* Smaller font */
+}
+
+.collection-entry {
+    display: flex;
+    justify-content: space-between; /* Aligns name left, button right */
+    align-items: center;
+    padding: 4px 0;
+}
+
+.collections-list-container {
+    max-height: 150px; /* Limit height */
+    overflow-y: auto; /* Add scrollbar if content overflows */
+    margin-bottom: 8px; /* Space above footer */
+}
+
+.collections-menu-footer {
+    border-top: 1px solid #eee; /* Separator line */
+    padding-top: 8px;
+    text-align: right; /* Align link to the right */
+}
+.collections-menu-footer a {
+    text-decoration: none;
+    color: #0056b3;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px; /* Space between icon and text */
+}
+.collections-menu-footer a:hover {
+    text-decoration: underline;
+}
+
+.collection-action-button .btn {
+    margin: 0; /* Override default button margin */
+    padding: 2px 6px; /* Smaller padding for icon buttons */
+    line-height: 1; /* Tighter line height */
+}
+
+.collections-button {
+    color: #6c757d;
+    cursor: pointer;
+}
+
+.collections-button :hover {
+    color: #0056b3;
+}

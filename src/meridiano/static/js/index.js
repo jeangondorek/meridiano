@@ -45,13 +45,15 @@ async function toggleCollectionsMenu(event, menuId) {
         if (data.status === 'ok') {
             let html = '';
             if (data.collections && data.collections.length > 0) {
+                let collectionEntriesHtml = '';
                 data.collections.forEach(c => {
                     const buttonHtml = c.contains
-                        ? `<button class="btn btn-clear btn-remove-from-collection" data-collection-id="${c.id}" data-article-id="${articleId}">Remove</button>`
-                        : `<button class="btn btn-filter btn-add-to-collection" data-collection-id="${c.id}" data-article-id="${articleId}">Add</button>`;
-                    html += `<div class="collection-entry" data-collection-id="${c.id}"><span>${c.name}</span><span class="collection-action-button">${buttonHtml}</span></div>`;
+                        ? `<button class="btn btn-clear btn-remove-from-collection" data-collection-id="${c.id}" data-article-id="${articleId}" title="Remove from ${c.name}"><i class="fas fa-minus"></i></button>`
+                        : `<button class="btn btn-filter btn-add-to-collection" data-collection-id="${c.id}" data-article-id="${articleId}" title="Add to ${c.name}"><i class="fas fa-plus"></i></button>`;
+                    collectionEntriesHtml += `<div class="collection-entry" data-collection-id="${c.id}"><span>${c.name}</span><span class="collection-action-button">${buttonHtml}</span></div>`;
                 });
-                html += `<div class="collections-menu-footer"><a href="/collections">Manage Collections</a></div>`;
+                html += `<div class="collections-list-container">${collectionEntriesHtml}</div>`;
+                html += `<div class="collections-menu-footer"><a href="/collections"><i class="fas fa-cog"></i> Manage Collections</a></div>`;
             } else {
                 html = `<div>No collections yet. <a href="/collections">Create one</a>.</div>`;
             }
@@ -100,11 +102,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 const data = await response.json();
 
                 if (data.status === 'ok') {
-                    const buttonContainer = target.parentElement;
-                    const newButton = action === 'add'
-                        ? `<button class="btn btn-clear btn-remove-from-collection" data-collection-id="${collectionId}" data-article-id="${articleId}">Remove</button>`
-                        : `<button class="btn btn-filter btn-add-to-collection" data-collection-id="${collectionId}" data-article-id="${articleId}">Add</button>`;
-                    buttonContainer.innerHTML = newButton;
+                    const buttonContainer = target.closest('.collection-action-button');
+                    if (buttonContainer) {
+                        const collectionEntry = buttonContainer.closest('.collection-entry');
+                        const collectionName = collectionEntry ? collectionEntry.querySelector('span:first-child').textContent : '';
+
+                        const newButton = action === 'add'
+                            ? `<button class="btn btn-clear btn-remove-from-collection" data-collection-id="${collectionId}" data-article-id="${articleId}" title="Remove from ${collectionName}"><i class="fas fa-minus"></i></button>`
+                            : `<button class="btn btn-filter btn-add-to-collection" data-collection-id="${collectionId}" data-article-id="${articleId}" title="Add to ${collectionName}"><i class="fas fa-plus"></i></button>`;
+                        buttonContainer.innerHTML = newButton;
+                    }
                 } else {
                     throw new Error(data.message || 'Action failed.');
                 }

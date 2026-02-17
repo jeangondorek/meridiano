@@ -24,12 +24,14 @@
         {% endif %}
         <div class="article-link-wrapper">
           <a href="{{ url_for('view_article', article_id=article['id']) }}"
-             class="article-link">{{ article['title'] | default("Untitled Article") }}</a> |
-          <a href="{{ article['url'] }}" class="article-link-original">Original</a>
+             class="article-link">{{ article['title'] | default("Untitled Article") }}</a>
+          <a href="{{ article['url'] }}" class="article-link-original">
+            <i class="fas fa-external-link" title="Original Article"></i>
+          </a>
           <span class="collections-control" style="margin-left:10px; position: relative;">
-          <button id="collections-toggle-{{ article['id'] }}" class="btn btn-clear" onclick="toggleCollectionsMenu(event, 'collections-menu-{{ article['id'] }}')" title="Add to Collections">
+          <span id="collections-toggle-{{ article['id'] }}" class="collections-button" onclick="toggleCollectionsMenu(event, 'collections-menu-{{ article['id'] }}')" title="Add to Collection">
             <i class="fas fa-folder-plus"></i>
-          </button>
+          </span>
           <div id="collections-menu-{{ article['id'] }}" class="collections-menu" style="display:none; position:absolute; right:0; background:#fff; border:1px solid #ddd; padding:8px; z-index:1000; min-width:220px;">
             <div class="collections-menu-content"></div>
           </div>
