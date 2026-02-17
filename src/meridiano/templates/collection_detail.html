@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+{% set title = "Collection: %s" % collection.get('name', 'Collection') %}
+{% include 'head.html' %}
+<body>
+    <div class="container">
+        {% include 'header.html' %}
+
+        <h2>Collection: {{ collection['name'] }}</h2>
+        <div class="timestamp">Created: {{ collection['created_at'] | datetimeformat }}</div>
+
+        <hr>
+
+        <h3>Articles in this collection</h3>
+        <ul class="article-list">
+            {% for article in articles %}
+                {% include '_article_item.html' %}
+            {% endfor %}
+        </ul>
+        <p id="no-articles-message" {% if articles %}style="display: none;"{% endif %}>No articles in this collection yet.</p>
+
+    </div>
+</body>
+</html>

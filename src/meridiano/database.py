@@ -13,7 +13,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlmodel import and_, asc, desc, func, or_, select
 
 from . import config_base as config
-from .models import Article, Brief, get_session
+from .models import Article, Brief, Collection, CollectionArticle, get_session
 from .models import init_db as model_init_db
 
 logger = logging.getLogger(__name__)
@@ -405,3 +405,82 @@ def get_distinct_feed_profiles(table: str = "articles") -> List[str]:
             result = session.exec(statement).all()
 
         return list(result)
+
+
+# -------------------------
+# Collections helpers
+# -------------------------
+def create_collection(name: str) -> int:
+    """Create a new collection and return its ID."""
+    with get_session() as session:
+        coll = Collection(name=name, created_at=datetime.now())
+        session.add(coll)
+        session.commit()
+        session.refresh(coll)
+        return coll.id
+
+
+def get_collections() -> List[Dict[str, Any]]:
+    """Return available collections (id, name, created_at)."""
+    with get_session() as session:
+        stmt = select(Collection).order_by(asc(Collection.name))
+        cols = session.exec(stmt).all()
+        return [{"id": c.id, "name": c.name, "created_at": c.created_at} for c in cols]
+
+
+def get_collection_by_id(collection_id: int) -> Optional[Dict[str, Any]]:
+    """Return collection metadata by id."""
+    with get_session() as session:
+        stmt = select(Collection).where(Collection.id == collection_id)
+        coll = session.exec(stmt).first()
+        if not coll:
+            return None
+        return {"id": coll.id, "name": coll.name, "created_at": coll.created_at}
+
+
+def add_article_to_collection(collection_id: int, article_id: int) -> None:
+    """Associate an article with a collection (idempotent)."""
+    with get_session() as session:
+        # Check existence first
+        exists_stmt = select(CollectionArticle).where(
+            and_(CollectionArticle.collection_id == collection_id, CollectionArticle.article_id == article_id)
+        )
+        existing = session.exec(exists_stmt).first()
+        if existing:
+            return
+
+        assoc = CollectionArticle(collection_id=collection_id, article_id=article_id)
+        session.add(assoc)
+        session.commit()
+
+
+def remove_article_from_collection(collection_id: int, article_id: int) -> None:
+    """Remove association between an article and a collection."""
+    with get_session() as session:
+        stmt = select(CollectionArticle).where(
+            and_(CollectionArticle.collection_id == collection_id, CollectionArticle.article_id == article_id)
+        )
+        assoc = session.exec(stmt).first()
+        if assoc:
+            session.delete(assoc)
+            session.commit()
+
+
+def get_articles_for_collection(collection_id: int) -> List[Dict[str, Any]]:
+    """Return article dicts for all articles in a collection ordered by fetched_at desc."""
+    with get_session() as session:
+        stmt = (
+            select(Article)
+            .join(CollectionArticle, Article.id == CollectionArticle.article_id)
+            .where(CollectionArticle.collection_id == collection_id)
+            .order_by(desc(Article.fetched_at))
+        )
+        articles = session.exec(stmt).all()
+        return [_article_to_dict(article) for article in articles]
+
+
+def get_article_count_for_collection(collection_id: int) -> int:
+    """Return the count of articles in a specific collection using a count query."""
+    with get_session() as session:
+        stmt = select(func.count(CollectionArticle.article_id)).where(CollectionArticle.collection_id == collection_id)
+        return session.exec(stmt).one()

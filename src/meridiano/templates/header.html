@@ -8,6 +8,7 @@
         <nav class="main-nav">
             <a href="{{ url_for('index', **profile_params) }}">Briefs</a>
             <a href="{{ url_for('list_articles', **profile_params) }}">Articles</a>
+            <a href="{{ url_for('collections', **profile_params) }}">Collections</a>
         </nav>
         <div class="header-actions">
             <a href="{{ url_for('add_manual_article') }}" class="btn btn-add-article" title="Add New Article">
@@ -16,3 +17,4 @@
         </div>
     </div>
 </header>
+{% include '_flash_messages.html' %}
