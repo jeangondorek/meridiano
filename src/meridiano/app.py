@@ -351,8 +351,10 @@ def collections():
         flash(f'Collection "{name}" created (ID: {coll_id}).', "success")
         return redirect(url_for("view_collection", collection_id=coll_id))
 
-    cols = database.get_collections()
-    return render_template("collections.html", collections=cols)
+    cols_data = database.get_collections()
+    for c in cols_data:
+        c["article_count"] = database.get_article_count_for_collection(c["id"])
+    return render_template("collections.html", collections=cols_data)
 
 
 @app.route("/collection/<int:collection_id>")

@@ -37,7 +37,7 @@ body {
 .logo {
     font-size: 1.5em;
     font-weight: 600;
-    color: #212529;
+    color: #495057;
     text-decoration: none;
 }
 .logo:hover {
@@ -85,7 +85,7 @@ h2 {
 }
 
 h3 {
-    color: #6c757d;
+    color: #495057;
     margin-top: 1.2em;
 }
 
@@ -242,6 +242,7 @@ li:not(.article-item) { /* Only apply margin to non-article list items */
 
 strong, b {
     font-weight: bold;
+    color: #495057;
 }
 
 em, i {
@@ -896,4 +897,11 @@ blockquote {
 
 .collections-button :hover {
     color: #0056b3;
+}
+
+.collection-article-count {
+    font-weight: 400; /* Normal weight */
+    font-size: 0.9em;
+    color: #6c757d; /* Muted text color */
+    margin-left: 5px;
 }

@@ -14,19 +14,26 @@
                     <label for="collection_name">New Collection Name</label>
                     <input type="text" class="form-control" id="collection_name" name="collection_name" placeholder="e.g., Important, To-Read">
                 </div>
-                <button type="submit" class="btn btn-primary">Create Collection</button>
+                <button type="submit" class="btn btn-add-article">
+                  <i class="fa fa-plus"></i>
+                  Create Collection
+                </button>
             </form>
         </div>
 
         <hr>
 
-        <h3>Existing Collections</h3>
         {% if collections %}
             <ul class="article-list">
                 {% for c in collections %}
                     <li class="article-item" style="align-items:center;">
                         <div style="flex-grow:1;">
-                            <a href="{{ url_for('view_collection', collection_id=c['id']) }}" class="article-link">{{ c['name'] }}</a>
+                            <a href="{{ url_for('view_collection', collection_id=c['id']) }}" class="article-link">
+                                {{ c['name'] }}
+                                <span class="collection-article-count">
+                                    ({{ c.article_count }} article{{ 's' if c.article_count != 1 else '' }})
+                                </span>
+                            </a>
                             <div class="form-text">Created: {{ c['created_at'] | datetimeformat }}</div>
                         </div>
                     </li>

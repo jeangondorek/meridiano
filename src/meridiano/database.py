@@ -477,3 +477,10 @@ def get_articles_for_collection(collection_id: int) -> List[Dict[str, Any]]:
         )
         articles = session.exec(stmt).all()
         return [_article_to_dict(article) for article in articles]
+
+
+def get_article_count_for_collection(collection_id: int) -> int:
+    """Return the count of articles in a specific collection using a count query."""
+    with get_session() as session:
+        stmt = select(func.count(CollectionArticle.article_id)).where(CollectionArticle.collection_id == collection_id)
+        return session.exec(stmt).one()
