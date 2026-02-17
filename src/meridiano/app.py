@@ -20,6 +20,16 @@ app.secret_key = os.getenv("FLASK_SECRET_KEY", "a_default_secret_key_for_develop
 # Register the filter with Jinja
 app.jinja_env.filters["datetimeformat"] = format_datetime
 
+def process_artciles_content(articles_data):
+    return [
+        {
+            **article,
+            "processed_content_html": Markup(
+                markdown.markdown(article["processed_content"] or "", extensions=["fenced_code"])
+            ),
+        }
+        for article in articles_data
+    ]
 
 @app.route("/")
 def index():
@@ -148,15 +158,7 @@ def list_articles():
         search_term=current_search_term if current_search_term else None,
     )
 
-    articles_data = [
-        {
-            **article,
-            "processed_content_html": Markup(
-                markdown.markdown(article["processed_content"] or "", extensions=["fenced_code"])
-            ),
-        }
-        for article in articles_data
-    ]
+    articles_data = process_artciles_content(articles_data)
 
     # Calculate total pages based on filtered count
     if total_articles > 0:
@@ -339,6 +341,7 @@ def add_manual_article():
 @app.route("/collections", methods=["GET", "POST"])
 def collections():
     """List collections and create a new collection."""
+
     if request.method == "POST":
         name = request.form.get("collection_name", "").strip()
         if not name:
@@ -355,10 +358,12 @@ def collections():
 @app.route("/collection/<int:collection_id>")
 def view_collection(collection_id):
     """View a single collection and its articles."""
+
     coll = database.get_collection_by_id(collection_id)
     if coll is None:
         abort(404)
     articles = database.get_articles_for_collection(collection_id)
+    articles = process_artciles_content(articles)
     return render_template("collection_detail.html", collection=coll, articles=articles)
 
 
