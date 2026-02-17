@@ -20,10 +20,17 @@ os.environ["DATABASE_URL"] = "sqlite:///:memory:"
 
 from meridiano.database import (
     add_article,
+    add_article_to_collection,
+    create_collection,
     get_all_articles,
     get_article_by_id,
+    get_article_count_for_collection,
+    get_articles_for_collection,
     get_brief_by_id,
+    get_collection_by_id,
+    get_collections,
     get_distinct_feed_profiles,
+    remove_article_from_collection,
     save_brief,
 )
 
@@ -31,11 +38,12 @@ from meridiano.database import (
 @pytest.fixture(autouse=True)
 def setup_test_db():
     """Initialize test database before each test and clean up after."""
-    init_db()
-    yield
-    # Clean up: drop all tables to ensure fresh state for next test
+    # This setup ensures that each test function runs with a fresh database.
+    # It drops all tables, then re-creates them before the test runs.
     with get_session() as session:
         SQLModel.metadata.drop_all(session.bind)
+    init_db()
+    return
 
 
 class TestAddArticle:
@@ -211,3 +219,71 @@ class TestSaveBrief:
         retrieved = get_brief_by_id(brief_id)
         assert retrieved is not None
         assert retrieved["contributing_article_ids"] == json.dumps([])
+
+
+class TestCollections:
+    """Tests for collection database operations."""
+
+    def test_create_collection(self):
+        """Test creating a new collection."""
+        coll_id = create_collection("Test Collection")
+        assert coll_id is not None
+        assert coll_id > 0
+
+        retrieved = get_collection_by_id(coll_id)
+        assert retrieved["name"] == "Test Collection"
+
+    def test_get_collections(self):
+        """Test retrieving all collections."""
+        # Initially empty
+        assert get_collections() == []
+
+        # After adding collections
+        create_collection("Collection B")
+        create_collection("Collection A")
+        collections = get_collections()
+        assert len(collections) == 2
+        # Test sorting by name
+        assert collections[0]["name"] == "Collection A"
+        assert collections[1]["name"] == "Collection B"
+
+    def test_add_and_remove_article_from_collection(self, sample_article_data):
+        """Test adding and removing an article from a collection."""
+        article_id = add_article(**sample_article_data)
+        coll_id = create_collection("My Collection")
+
+        # Initially, collection is empty
+        assert get_articles_for_collection(coll_id) == []
+        assert get_article_count_for_collection(coll_id) == 0
+
+        # Add article
+        add_article_to_collection(coll_id, article_id)
+        articles_in_coll = get_articles_for_collection(coll_id)
+        assert len(articles_in_coll) == 1
+        assert articles_in_coll[0]["id"] == article_id
+        assert get_article_count_for_collection(coll_id) == 1
+
+        # Add again (should be idempotent)
+        add_article_to_collection(coll_id, article_id)
+        assert get_article_count_for_collection(coll_id) == 1
+
+        # Remove article
+        remove_article_from_collection(coll_id, article_id)
+        assert get_articles_for_collection(coll_id) == []
+        assert get_article_count_for_collection(coll_id) == 0
+
+    def test_get_multiple_articles_for_collection(self, sample_article_data):
+        """Test retrieving multiple articles from a collection."""
+        coll_id = create_collection("Tech News")
+        article_ids = []
+        for i in range(3):
+            data = sample_article_data.copy()
+            data["url"] = f"http://example.com/{i}"
+            article_id = add_article(**data)
+            article_ids.append(article_id)
+            add_article_to_collection(coll_id, article_id)
+
+        articles = get_articles_for_collection(coll_id)
+        assert len(articles) == 3
+        retrieved_ids = {a["id"] for a in articles}
+        assert retrieved_ids == set(article_ids)

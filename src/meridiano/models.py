@@ -3,9 +3,9 @@ SQLModel database models for Meridiano application.
 """
 
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional
 
-from sqlmodel import Field, Session, SQLModel, create_engine, text, Relationship
+from sqlmodel import Field, Session, SQLModel, create_engine, text
 
 from . import config_base as config
 
